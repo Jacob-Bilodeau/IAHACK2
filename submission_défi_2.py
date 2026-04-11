@@ -6,8 +6,6 @@ import json
 import argparse
 import joblib
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
 
@@ -35,7 +33,6 @@ def train_model(train_csv, model_dir):
     model.fit(X, y)
 
     joblib.dump(model, os.path.join(model_dir, 'model.joblib'))
-    print('Modèle entraîné sur les 3 caractéristiques de base.')
 
 # =========================
 #  LOAD
