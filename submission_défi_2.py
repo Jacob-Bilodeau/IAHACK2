@@ -8,6 +8,14 @@ import joblib
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OrdinalEncoder, FunctionTransformer
+
+
+def extract_time_features(X):
+    dt = pd.to_datetime(X.iloc[:, 0])
+    return pd.concat([dt.dt.hour, dt.dt.month], axis=1).values
 
 # =========================
 # TRAIN
@@ -15,23 +23,36 @@ from sklearn.ensemble import RandomForestClassifier
 def train_model(train_csv, model_dir):
     df = pd.read_csv(train_csv)
 
-    features = ['Speed', 'Sinuosity', 'FlightDistance']
+    features = ['Speed', 'Sinuosity', 'FlightDistance', 'Location', 'LocalDateTime']
     target = 'Behavior'
     
-
     df_clean = df.dropna(subset=features + [target]).copy()
-
-    df_final = df_clean[features + [target]]
-    os.makedirs(model_dir, exist_ok=True)
-    filtered_path = os.path.join(model_dir, 'train_filtered.csv')
-    df_final.to_csv(filtered_path, index=False)
 
     X = df_clean[features]
     y = df_clean[target]
     
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('cat', OrdinalEncoder(), ['Location']), 
+            ('time', FunctionTransformer(extract_time_features), ['LocalDateTime']) 
+        ],
+        remainder='passthrough'
+    )
+
+    model = Pipeline(steps=[
+        ('preprocessor', preprocessor),
+        ('classifier', RandomForestClassifier(
+            n_estimators=300,            
+            max_depth=15,                
+            class_weight='balanced',     
+            random_state=42,
+            n_jobs=-1
+        ))
+    ])
+    
     model.fit(X, y)
 
+    os.makedirs(model_dir, exist_ok=True)
     joblib.dump(model, os.path.join(model_dir, 'model.joblib'))
 
 # =========================
@@ -51,7 +72,7 @@ def evaluate_model(model, test_csv, output_json):
     df = pd.read_csv(test_csv)
 
     y_true = df['Behavior']
-    y_pred = model.predict(df[['Speed', 'Sinuosity', 'FlightDistance']])
+    y_pred = model.predict(df[['Speed', 'Sinuosity', 'FlightDistance', 'Location', 'LocalDateTime']])
 
    #  Metrics 
     acc = accuracy_score(y_true, y_pred)
@@ -74,7 +95,6 @@ def evaluate_model(model, test_csv, output_json):
     with open(output_json, "w") as f:
         json.dump(metrics, f, indent=4)
 
-    print("Évaluation terminée")
 
 # =========================
 #  MAIN
