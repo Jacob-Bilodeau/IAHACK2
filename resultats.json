@@ -1,7 +1,7 @@
 {
-    "accuracy": 1.0,
-    "precision": 1.0,
-    "recall": 1.0,
-    "f1_score": 1.0,
-    "diag_mean": 1.0
+    "accuracy": 0.9943135312109593,
+    "precision": 0.9887397890355814,
+    "recall": 0.991303429924095,
+    "f1_score": 0.9899180058964676,
+    "diag_mean": 0.991303429924095
 }
