@@ -4,10 +4,10 @@ import os
 import pandas as pd
 import plotly.express as px
 
-# Configuration
+
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 
-# --- CSS Personnalisé pour la Police et le Style ---
+
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
@@ -34,10 +34,10 @@ try:
     with open(json_path, "r") as f:
         data = json.load(f)
 
-    # Convertir en pourcentages pour l'affichage
+
     metrics_pct = {k: v * 100 for k, v in data.items()}
 
-    # --- SECTION 1 : Cartes de Score Éclatantes ---
+
     cols = st.columns(5)
     labels = ["ACCURACY", "PRECISION", "RECALL", "F1 SCORE", "DIAG MEAN"]
     keys = ["accuracy", "precision", "recall", "f1_score", "diag_mean"]
@@ -53,17 +53,17 @@ try:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- SECTION 2 : Graphique Plotly Interactif ---
+    
     col_left, col_right = st.columns([2, 1])
 
     with col_left:
-        # On prépare les données pour Plotly
+
         df_plot = pd.DataFrame({
             'Metrique': ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
             'Score (%)': [metrics_pct['accuracy'], metrics_pct['precision'], metrics_pct['recall'], metrics_pct['f1_score']]
         })
 
-        # Création d'un graphique à barres horizontal éclatant
+       
         fig = px.bar(df_plot, 
                      x='Score (%)', 
                      y='Metrique', 
@@ -81,7 +81,7 @@ try:
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(family="Inter", size=14),
             xaxis=dict(showgrid=True, gridcolor='lightgrey'),
-            yaxis=dict(autorange="reversed"), # Pour avoir Accuracy en haut
+            yaxis=dict(autorange="reversed"), 
             showlegend=False,
             height=400
         )
@@ -90,7 +90,7 @@ try:
 
     with col_right:
         st.markdown("### Analyse de Distribution")
-        # Un graphique de type "Jauge" pour le score principal
+     
         fig_gauge = px.pie(values=[data['f1_score'], 1-data['f1_score']], 
                            names=['Performance', 'Reste'],
                            hole=0.7,
