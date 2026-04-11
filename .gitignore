@@ -1,1 +1,3 @@
 env/
+mes_modeles/model.joblib
+mes_modeles/train_filtered.csv
