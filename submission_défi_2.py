@@ -8,12 +8,11 @@ import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
 
 # =========================
-# FONCTION DE PRÉPARATION (Pour éviter de répéter le code)
+# Préparation des données
 # =========================
 def prepare_data(df):
     # Date -> Heure
@@ -54,7 +53,7 @@ def train_model(train_csv, model_dir):
     model.fit(X, y)
 
     joblib.dump(model, os.path.join(model_dir, "model.joblib"))
-    print("Modèle entraîné avec succès avec 5 caractéristiques.")
+    print("Modèle entraîné.")
 
 # =========================
 #  LOAD
@@ -73,16 +72,18 @@ def evaluate_model(model, test_csv, output_json):
     df = pd.read_csv(test_csv)
 
     df, features, target = prepare_data(df)
+    
     df_clean = df.dropna(subset=features + [target]).copy()
     
     X_test = df_clean[features]
     y_true = df_clean[target]
     
-
     y_pred = model.predict(X_test)
 
-    results_df = df_clean.copy()
+    results_df = df_clean[features + [target]].copy() 
     results_df['Predicted_Behavior'] = y_pred
+    results_df['Is_Correct'] = (results_df[target] == results_df['Predicted_Behavior'])
+
     pred_path = os.path.join(os.path.dirname(output_json), "predictions_comparaison.csv")
     results_df.to_csv(pred_path, index=False)
     print(f"Tableau comparatif sauvegardé : {pred_path}")
@@ -92,14 +93,11 @@ def evaluate_model(model, test_csv, output_json):
     recall = recall_score(y_true, y_pred, average="macro", zero_division=0)
     f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
     
-    cm = confusion_matrix(y_true, y_pred)
     cm_normalized = confusion_matrix(y_true, y_pred, normalize='true')
-    diag_mean = cm_normalized.diagonal().mean()
 
+    
     plt.figure(figsize=(10, 8))
-    sns.heatmap(cm_normalized, annot=True, fmt='.2f', cmap='Greens',
-                xticklabels=model.classes_, 
-                yticklabels=model.classes_)
+    sns.heatmap(cm_normalized, annot=True, fmt='.2f', cmap='Greens', xticklabels=model.classes_, yticklabels=model.classes_)
     plt.title(f'Matrice de Confusion (Accuracy: {acc:.2f})')
     plt.xlabel('Prédictions de l\'IA')
     plt.ylabel('Réalité (Terrain)')
@@ -113,14 +111,13 @@ def evaluate_model(model, test_csv, output_json):
         "precision": float(precision),
         "recall": float(recall),
         "f1_score": float(f1),
-        "diag_mean": float(diag_mean)
+        "diag_mean": float(cm_normalized.diagonal().mean())
     }
 
     with open(output_json, "w") as f:
         json.dump(metrics, f, indent=4)
     
     print(f"Évaluation terminée. Score global : {acc:.2%}")
-
 # =========================
 #  MAIN
 # =========================
