@@ -1,4 +1,5 @@
 env/
 *.csv
 *.joblib
+*.png
 mes_modeles/
